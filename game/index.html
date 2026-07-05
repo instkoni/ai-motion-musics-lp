@@ -32,6 +32,22 @@
     border: 1.5px solid rgba(255,212,121,.7); color: #ffd479; background: rgba(10,14,36,.4);
     display: none; align-items: center; justify-content: center; font-size: 11px; letter-spacing: .1em;
     backdrop-filter: blur(3px); }
+  /* ミニマップ */
+  #map { position: fixed; top: 14px; right: 14px; left: auto; bottom: auto; width: 148px; height: 148px; border-radius: 12px;
+    border: 1px solid rgba(154,163,208,.5); background: rgba(5,7,15,.55); display: none;
+    box-shadow: 0 6px 24px rgba(0,0,0,.4); }
+  /* 操作パネル（常設） */
+  #ctl { position: fixed; left: 14px; bottom: 14px; display: none; flex-direction: column; gap: 4px;
+    padding: 10px 14px; border-radius: 10px; background: rgba(5,7,15,.5); border: 1px solid rgba(154,163,208,.35);
+    color: #cfd6f5; font-size: 11px; line-height: 1.7; letter-spacing: .06em; backdrop-filter: blur(3px);
+    pointer-events: none; text-shadow: 0 1px 6px rgba(0,0,0,.8); }
+  #ctl b { color: #6ee7d8; font-weight: 600; }
+  /* チュートリアル */
+  #tut { position: fixed; top: 24%; left: 50%; transform: translateX(-50%); display: none;
+    padding: 14px 26px; border-radius: 12px; background: rgba(5,7,15,.68); border: 1px solid rgba(110,231,216,.5);
+    color: #eef0ff; font-size: 14px; letter-spacing: .1em; text-align: center; line-height: 1.9;
+    box-shadow: 0 8px 30px rgba(0,0,0,.5); pointer-events: none; transition: opacity .6s; }
+  #tut .ok { color: #ffd479; }
   /* タイトル */
   #title { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center;
     justify-content: center; gap: 16px; text-align: center; cursor: pointer; color: #eef0ff;
@@ -72,8 +88,16 @@
 
 <div id="hud" class="ui"><span>💎 <b id="ncry">0</b> / 15</span><span id="spd">SPEED 40</span><span id="clock">☀ DAY</span></div>
 <div id="compass" class="ui">▲</div>
-<div id="hint" class="ui">ドラッグで旋回 ／ W・↑ か 右下ボタンで加速 ── 光るクリスタルを集めよう</div>
+<div id="cdist" class="ui" style="top:76px;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:.14em;color:#9db4d8;display:none"></div>
+<div id="hint" class="ui" style="display:none"></div>
 <button id="boost">BOOST</button>
+<canvas id="map" width="148" height="148"></canvas>
+<div id="ctl">
+  <span>🖱 <b>マウス</b> 動かした方向に旋回（中央=直進）</span>
+  <span>⌨ <b>W / ↑</b> 加速　<b>S / ↓</b> 減速　<b>A / D</b> 旋回</span>
+  <span>🗺 <b>M</b> マップ表示切替　📱 タッチ=なぞった方向へ</span>
+</div>
+<div id="tut"></div>
 
 <div id="title">
   <p class="sub">ONE-PROMPT WEBGL WORLD</p>
@@ -388,31 +412,70 @@ const SCALE = [523.25, 587.33, 659.25, 784.0, 880.0, 1046.5, 1174.7, 1318.5];
 
 /* ═══════════════════ プレイヤー・入力 ═══════════════════ */
 const P = { x: SPAWN.x, y: Math.max(height(SPAWN.x, SPAWN.z), 0) + 110, z: SPAWN.z, yaw: 0, pitch: -0.08, speed: 40 };
-let drag = null, boosting = false, state = 'title', got = 0, t0 = 0;
+let boosting = false, state = 'title', got = 0, t0 = 0;
+let aim = null, mouseMode = false;           /* 照準: マウスは常時・タッチは接触中のみ */
+let mapOn = true;
 const keys = {};
-addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
-addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
-addEventListener('pointerdown', e => { if (e.target.id === 'boost') return; drag = { x: e.clientX, y: e.clientY }; });
-addEventListener('pointermove', e => {
-  if (!drag || state !== 'play') return;
-  P.yaw += (e.clientX - drag.x) * 0.0035;
-  P.pitch -= (e.clientY - drag.y) * 0.0028;
-  P.pitch = Math.max(-1.1, Math.min(1.1, P.pitch));
-  drag = { x: e.clientX, y: e.clientY };
+const mapCv = document.getElementById('map');
+addEventListener('keydown', e => {
+  keys[e.key.toLowerCase()] = true;
+  if (e.key.toLowerCase() === 'm' && state !== 'title') {
+    mapOn = !mapOn; mapCv.style.display = mapOn ? 'block' : 'none';
+  }
 });
-addEventListener('pointerup', () => drag = null);
+addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+let lastTouchT = 0;
+addEventListener('mousemove', e => {
+  if (performance.now() - lastTouchT < 800) return;   /* タッチ後の合成mousemoveを無視 */
+  mouseMode = true; aim = { x: e.clientX, y: e.clientY };
+});
+addEventListener('touchstart', e => {
+  if (e.target.id === 'boost') return;
+  mouseMode = false;
+  const t = e.touches[0]; aim = { x: t.clientX, y: t.clientY };
+}, { passive: true });
+addEventListener('touchmove', e => {
+  if (e.target.id === 'boost') return;
+  const t = e.touches[0]; aim = { x: t.clientX, y: t.clientY };
+}, { passive: true });
+addEventListener('touchend', () => { lastTouchT = performance.now(); aim = null; });
 const boostBtn = document.getElementById('boost');
 boostBtn.addEventListener('pointerdown', e => { e.stopPropagation(); boosting = true; });
 addEventListener('pointerup', () => boosting = false);
+
+/* チュートリアル（実操作を検知して進む） */
+const tut = document.getElementById('tut');
+const TUT = [
+  '① マウス（指）を画面の<b>行きたい方向</b>へ動かすと旋回します（中央に戻すと直進）',
+  '② <b style="color:#ffd479">W / ↑キー</b> か 右下の <b style="color:#ffd479">BOOST</b> で加速！',
+  '③ 上の<span style="color:#6ee7d8">▲羅針盤</span>と右上<span style="color:#6ee7d8">マップの金色の点</span>が<br>クリスタルの場所。15個集めよう💎',
+];
+let tutStep = 0, tutSteer = 0, tutBoost = 0, tutTimer = 0, tutLock = false;
+function tutShow() {
+  if (tutStep < TUT.length) { tut.innerHTML = TUT[tutStep]; tut.style.display = 'block'; tut.style.opacity = 1; }
+}
+function tutAdvance() {
+  if (tutLock) return; tutLock = true;
+  tut.innerHTML += '　<span class="ok">OK!</span>';
+  tutStep++;
+  setTimeout(() => {
+    tutLock = false;
+    if (tutStep < TUT.length) tutShow();
+    else { tut.style.opacity = 0; setTimeout(() => tut.style.display = 'none', 700); }
+  }, 1000);
+}
 
 const titleEl = document.getElementById('title'), finEl = document.getElementById('fin');
 titleEl.addEventListener('click', () => {
   if (state !== 'title') return;
   initAudio(); chime(659.25, 0, 1.4, 0.4);
   titleEl.classList.add('off');
-  ['hud', 'hint', 'compass'].forEach(id => document.getElementById(id).style.display = id === 'hud' ? 'flex' : 'block');
+  ['hud', 'compass', 'cdist'].forEach(id => document.getElementById(id).style.display = id === 'hud' ? 'flex' : 'block');
+  document.getElementById('ctl').style.display = 'flex';
+  if (mapOn) mapCv.style.display = 'block';
   if ('ontouchstart' in window) boostBtn.style.display = 'flex';
   state = 'play'; t0 = performance.now();
+  tutShow();
 });
 document.getElementById('replay').addEventListener('click', () => {
   crystals.forEach(c => c.got = false); got = 0;
@@ -446,8 +509,57 @@ function skyState(T) {
 /* ═══════════════════ メインループ ═══════════════════ */
 const sunEl = document.getElementById('sun'), starsEl = document.getElementById('stars'),
       spdEl = document.getElementById('spd'), clockEl = document.getElementById('clock'),
-      compEl = document.getElementById('compass'), ncryEl = document.getElementById('ncry');
+      compEl = document.getElementById('compass'), ncryEl = document.getElementById('ncry'),
+      cdistEl = document.getElementById('cdist');
 let last = performance.now(), finFired = false;
+
+/* ═══════════════════ ミニマップ ═══════════════════ */
+const mctx = mapCv.getContext('2d');
+const MAPR = 2600;                                    /* 表示半径（ワールド単位） */
+const terra = document.createElement('canvas'); terra.width = 64; terra.height = 64;
+const tctx = terra.getContext('2d');
+let mapAt = -99, mapPX = 1e9, mapPZ = 0;
+function renderTerra() {
+  const img = tctx.createImageData(64, 64);
+  for (let j = 0; j < 64; j++) for (let i = 0; i < 64; i++) {
+    const wx = P.x + (i / 63 * 2 - 1) * MAPR, wz = P.z + (j / 63 * 2 - 1) * MAPR;
+    const h = height(wx, wz);
+    let r, g, b;
+    if (h < 0)       { r = 16;  g = 40;  b = 66; }    /* 海 */
+    else if (h < 16) { r = 62;  g = 128; b = 74; }    /* 草原 */
+    else if (h < 82) { r = 104; g = 96;  b = 92; }    /* 山地 */
+    else             { r = 238; g = 242; b = 250; }   /* 雪 */
+    const o = (j * 64 + i) * 4;
+    img.data[o] = r; img.data[o+1] = g; img.data[o+2] = b; img.data[o+3] = 235;
+  }
+  tctx.putImageData(img, 0, 0);
+}
+function drawMap(T) {
+  if (T - mapAt > 2.5 || Math.hypot(P.x - mapPX, P.z - mapPZ) > 450) {
+    renderTerra(); mapAt = T; mapPX = P.x; mapPZ = P.z;
+  }
+  mctx.clearRect(0, 0, 148, 148);
+  mctx.save();
+  mctx.beginPath(); mctx.arc(74, 74, 70, 0, 7); mctx.clip();
+  mctx.drawImage(terra, 4, 4, 140, 140);
+  crystals.forEach(c => {
+    if (c.got) return;
+    const mx = 74 + (c.x - P.x) / MAPR * 70, my = 74 + (c.z - P.z) / MAPR * 70;
+    if (Math.hypot(mx - 74, my - 74) < 66) {
+      mctx.beginPath(); mctx.arc(mx, my, 3, 0, 7);
+      mctx.fillStyle = '#ffd479'; mctx.shadowColor = '#ffd479'; mctx.shadowBlur = 5; mctx.fill(); mctx.shadowBlur = 0;
+    } else {                                          /* 圏外→縁に方向表示 */
+      const a = Math.atan2(my - 74, mx - 74);
+      mctx.beginPath(); mctx.arc(74 + Math.cos(a) * 66, 74 + Math.sin(a) * 66, 2, 0, 7);
+      mctx.fillStyle = 'rgba(255,212,121,.6)'; mctx.fill();
+    }
+  });
+  /* 自機（向き付き三角） */
+  mctx.translate(74, 74); mctx.rotate(P.yaw);
+  mctx.beginPath(); mctx.moveTo(0, -7); mctx.lineTo(4.5, 5); mctx.lineTo(-4.5, 5); mctx.closePath();
+  mctx.fillStyle = '#6ee7d8'; mctx.shadowColor = '#6ee7d8'; mctx.shadowBlur = 6; mctx.fill();
+  mctx.restore();
+}
 
 function loop(now) {
   requestAnimationFrame(loop);
@@ -458,7 +570,26 @@ function loop(now) {
   if (state === 'play') {
     if (keys['a'] || keys['arrowleft']) P.yaw -= 1.3 * dt;
     if (keys['d'] || keys['arrowright']) P.yaw += 1.3 * dt;
+    /* 照準操作: 画面中央からのオフセットで旋回（クリック不要） */
+    let aimPitching = false;
+    if (aim) {
+      const dx = (aim.x - VW / 2) / (VW / 2), dy = (aim.y - VH / 2) / (VH / 2);
+      const dz = 0.1;
+      const ax = Math.abs(dx) > dz ? (dx - Math.sign(dx) * dz) / (1 - dz) : 0;
+      const ay = Math.abs(dy) > dz ? (dy - Math.sign(dy) * dz) / (1 - dz) : 0;
+      P.yaw += ax * 1.7 * dt;
+      P.pitch += -ay * 1.15 * dt;
+      P.pitch = Math.max(-1.1, Math.min(1.1, P.pitch));
+      if (Math.abs(ax) > 0.06 || Math.abs(ay) > 0.06) { tutSteer += dt; aimPitching = Math.abs(ay) > 0.06; }
+    }
+    /* 無入力時はゆるやかに水平へ（酔い・迷子防止） */
+    if (!aimPitching) P.pitch += (-0.02 - P.pitch) * Math.min(1, dt * 0.5);
     const wantBoost = boosting || keys['w'] || keys['arrowup'] || keys['shift'];
+    if (wantBoost) tutBoost += dt;
+    /* チュートリアル進行判定 */
+    if (tutStep === 0 && tutSteer > 1.1) tutAdvance();
+    else if (tutStep === 1 && tutBoost > 0.7) tutAdvance();
+    else if (tutStep === 2) { tutTimer += dt; if (tutTimer > 5.5) tutAdvance(); }
     const wantSlow = keys['s'] || keys['arrowdown'];
     const target = wantBoost ? 120 : wantSlow ? 16 : 40;
     P.speed += (target - P.speed) * Math.min(1, dt * 2.2);
@@ -499,9 +630,11 @@ function loop(now) {
       const bearing = Math.atan2(near.x - P.x, -(near.z - P.z)) - P.yaw;
       compEl.style.transform = `translateX(-50%) rotate(${bearing}rad)`;
       compEl.style.opacity = nd > 150 ? 1 : 0.15;
+      cdistEl.textContent = '最寄りのクリスタル ' + (nd >= 1000 ? (nd / 1000).toFixed(1) + 'km' : Math.round(nd) + 'm');
     }
   }
   ensureChunks(P.x, P.z);
+  if (mapOn && state !== 'title') drawMap(T);
 
   /* --- 空・光 --- */
   const sk = skyState(state === 'title' ? 20 : T);
