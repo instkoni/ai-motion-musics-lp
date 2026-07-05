@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>異世界の音楽家 / AI Motion Musics — 挫折を糧に、AIで音楽と物語を。</title>
+<meta name="description" content="AIで音楽と物語を作るクリエイター instkoni のブランドページ。挫折から始まった物語と、AI音楽・ミュージックビデオ作品の走馬灯。">
+<meta property="og:title" content="異世界の音楽家 / AI Motion Musics">
+<meta property="og:description" content="挫折を糧に。AIで、音楽と物語を。90秒のブランドストーリーと作品の走馬灯。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://instkoni.github.io/ai-motion-musics-lp/">
+<meta property="og:image" content="https://instkoni.github.io/ai-motion-musics-lp/assets/brand-story-poster.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  /* ═══════════ Base ═══════════ */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --night0: #05070f;
+    --night1: #0a0e24;
+    --night2: #131a3f;
+    --aurora1: #6ee7d8;
+    --aurora2: #8b7cf6;
+    --magenta: #e879b9;
+    --gold: #ffd479;
+    --ink: #eef0ff;
+    --ink-dim: #98a1cf;
+    --serif: "Hiragino Mincho ProN", "Yu Mincho", serif;
+    --sans: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--sans);
+    background: var(--night0);
+    color: var(--ink);
+    overflow-x: hidden;
+    line-height: 1.85;
+  }
+  ::selection { background: rgba(139,124,246,0.5); }
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: var(--night0); }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--aurora2), var(--aurora1));
+    border-radius: 6px;
+  }
+  section { position: relative; padding: 110px 24px; z-index: 3; }
+  .inner { max-width: 980px; margin: 0 auto; position: relative; }
+
+  /* 見出し: グラデーション文字＋シマー下線 */
+  h2 {
+    font-family: var(--serif);
+    font-size: clamp(27px, 4.6vw, 40px);
+    margin-bottom: 48px;
+    text-align: center;
+    letter-spacing: 0.1em;
+    background: linear-gradient(100deg, var(--ink) 30%, var(--aurora1) 50%, var(--ink) 70%);
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 6s linear infinite;
+  }
+  @keyframes shimmer { to { background-position: -220% 0; } }
+  h2::after {
+    content: "";
+    display: block;
+    width: 68px; height: 2px;
+    margin: 18px auto 0;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  /* ═══════════ 背景レイヤー群 ═══════════ */
+  /* 1) ベースの空 */
+  .sky {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 90% 55% at 72% -12%, rgba(139,124,246,0.28), transparent 62%),
+      radial-gradient(ellipse 70% 45% at 15% 112%, rgba(110,231,216,0.16), transparent 62%),
+      radial-gradient(ellipse 40% 30% at 88% 78%, rgba(232,121,185,0.10), transparent 70%),
+      linear-gradient(180deg, var(--night0) 0%, var(--night1) 48%, var(--night0) 100%);
+  }
+  /* 2) Canvas: 音のパーティクル（音符・光条・星屑） */
+  #fx { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+  /* 3) 走馬灯ギャラリー（背景・実際の作品サムネイルが流れる） */
+  .lantern {
+    position: fixed; inset: 0; z-index: 2; pointer-events: none;
+    display: flex; flex-direction: column; justify-content: center; gap: 6vh;
+    opacity: 0.6;
+    -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 22%, #000 78%, transparent 100%);
+            mask-image: linear-gradient(180deg, transparent 0%, #000 22%, #000 78%, transparent 100%);
+  }
+  .reel { display: flex; gap: 34px; width: max-content; will-change: transform; }
+  .reel.r1 { animation: drift1 90s linear infinite; }
+  .reel.r2 { animation: drift2 120s linear infinite; }
+  @keyframes drift1 { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @keyframes drift2 { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+  .frame {
+    width: 300px; height: 169px; flex: none;
+    border-radius: 10px;
+    border: 1px solid rgba(154,163,208,0.28);
+    position: relative; overflow: hidden;
+    opacity: 0.22;
+    filter: saturate(0.85) brightness(0.9);
+    box-shadow: 0 0 34px rgba(139,124,246,0.12);
+  }
+  .frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .frame::after { /* フィルムのスプロケット風パンチ */
+    content: ""; position: absolute; top: 6px; bottom: 6px; left: 8px; width: 4px;
+    background: repeating-linear-gradient(180deg, rgba(255,255,255,0.35) 0 6px, transparent 6px 16px);
+    opacity: .5;
+  }
+
+  /* ═══════════ Hero シアター（ブランド動画） ═══════════ */
+  .theater {
+    position: relative;
+    max-width: 780px;
+    margin: 46px auto 0;
+    border-radius: 18px;
+    padding: 2px;                       /* オーロラ縁の厚み */
+    background: conic-gradient(from var(--tAng, 0deg),
+      var(--aurora1), var(--aurora2), var(--magenta), var(--gold), var(--aurora1));
+    animation: theaterRim 7s linear infinite;
+    box-shadow:
+      0 24px 80px rgba(139,124,246,0.35),
+      0 0 120px rgba(110,231,216,0.18);
+    opacity: 0; animation: fadeUp 1.4s 1.1s ease both, theaterRim 7s linear infinite;
+  }
+  @property --tAng { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+  @keyframes theaterRim { to { --tAng: 360deg; } }
+  .theater .screen {
+    position: relative; border-radius: 16px; overflow: hidden;
+    background: #000;
+  }
+  .theater video { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+  .theater .veil {
+    position: absolute; inset: 0; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+    background:
+      radial-gradient(ellipse 80% 65% at 50% 46%, rgba(5,7,15,0.1), rgba(5,7,15,0.62) 90%),
+      linear-gradient(180deg, rgba(5,7,15,0.25), rgba(5,7,15,0.55));
+    transition: opacity .6s ease, visibility .6s;
+  }
+  .theater .veil.off { opacity: 0; visibility: hidden; }
+  .playbtn {
+    position: relative;
+    width: 84px; height: 84px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(10,14,36,0.55);
+    border: 1.5px solid rgba(110,231,216,0.75);
+    backdrop-filter: blur(5px);
+    transition: transform .35s ease, box-shadow .35s ease;
+  }
+  .playbtn::before, .playbtn::after {
+    content: ""; position: absolute; inset: -1.5px; border-radius: 50%;
+    border: 1.5px solid rgba(110,231,216,0.55);
+    animation: ripple 2.4s ease-out infinite;
+  }
+  .playbtn::after { animation-delay: 1.2s; }
+  @keyframes ripple { from { transform: scale(1); opacity: .8; } to { transform: scale(1.9); opacity: 0; } }
+  .playbtn svg { width: 30px; height: 30px; margin-left: 5px; fill: var(--aurora1);
+    filter: drop-shadow(0 0 10px rgba(110,231,216,0.8)); }
+  .theater .veil:hover .playbtn { transform: scale(1.1); box-shadow: 0 0 44px rgba(110,231,216,0.5); }
+  .theater .vlabel {
+    font-family: var(--serif); color: var(--ink);
+    font-size: clamp(15px, 2.4vw, 19px); letter-spacing: 0.14em;
+    text-shadow: 0 2px 18px rgba(5,7,15,0.9);
+  }
+  .theater .vsub {
+    font-size: 10.5px; letter-spacing: 0.4em; color: var(--aurora1); text-transform: uppercase;
+  }
+  .theater .badge {
+    position: absolute; top: 14px; left: 16px; z-index: 2;
+    font-size: 10px; letter-spacing: 0.3em; color: var(--ink);
+    padding: 6px 14px; border-radius: 999px;
+    background: rgba(5,7,15,0.55); border: 1px solid rgba(255,212,121,0.5);
+    color: var(--gold);
+    backdrop-filter: blur(4px);
+    pointer-events: none;
+  }
+
+  /* ═══════════ 作品の走馬灯（3D回転ランタン・実サムネイル） ═══════════ */
+  .works { padding: 130px 0 120px; overflow: hidden; }
+  .works h2, .works .sub { position: relative; z-index: 3; }
+  .works .sub {
+    text-align: center; color: var(--ink-dim); font-size: clamp(13px, 2vw, 15px);
+    letter-spacing: 0.18em; margin: -28px 0 12px;
+    text-shadow: 0 1px 14px rgba(5,7,15,0.95), 0 0 26px rgba(5,7,15,0.9);
+  }
+  .stage {
+    position: relative;
+    height: 300px;
+    margin-top: 64px;
+    perspective: 1300px;
+    perspective-origin: 50% 42%;
+  }
+  .ring {
+    position: absolute; left: 50%; top: 50%;
+    transform-style: preserve-3d;
+    animation: ringSpin 72s linear infinite;
+    will-change: transform;
+  }
+  @keyframes ringSpin {
+    from { transform: translate(-50%,-50%) rotateX(-5deg) rotateY(0deg); }
+    to   { transform: translate(-50%,-50%) rotateX(-5deg) rotateY(-360deg); }
+  }
+  .stage:hover .ring { animation-play-state: paused; }
+  .card {
+    position: absolute; left: 50%; top: 50%;
+    width: var(--cardW, 264px); aspect-ratio: 16 / 9;
+    margin: calc(var(--cardW, 264px) * -0.28125) 0 0 calc(var(--cardW, 264px) * -0.5);
+    border-radius: 12px; overflow: hidden;
+    border: 1px solid rgba(154,163,208,0.5);
+    box-shadow: 0 10px 44px rgba(5,7,15,0.7), 0 0 30px rgba(139,124,246,0.22);
+    background: #000;
+  }
+  .card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card::after { /* 灯りのガラス面 */
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(238,240,255,0.14), transparent 34%, rgba(5,7,15,0.42) 100%);
+  }
+  .stage .floor { /* ランタンの灯りだまり */
+    position: absolute; left: 50%; bottom: -46px; transform: translateX(-50%);
+    width: min(760px, 86vw); height: 130px; pointer-events: none;
+    background: radial-gradient(ellipse 50% 46% at 50% 50%, rgba(255,212,121,0.16), rgba(139,124,246,0.10) 55%, transparent 75%);
+    filter: blur(6px);
+  }
+  .works .more { text-align: center; margin-top: 84px; }
+  .works .more a {
+    color: var(--aurora1); text-decoration: none; letter-spacing: 0.2em;
+    font-size: 13.5px; border-bottom: 1px solid rgba(110,231,216,0.45); padding-bottom: 5px;
+    transition: color .3s ease, border-color .3s ease;
+  }
+  .works .more a:hover { color: var(--ink); border-color: var(--ink); }
+  @media (max-width: 720px) {
+    .card { --cardW: 148px; }
+    .stage { height: 210px; perspective: 780px; margin-top: 96px; }
+    .works .more { margin-top: 120px; }
+    .theater { margin-top: 38px; }
+  }
+
+  /* 4) 粒状ノイズ */
+  .grain {
+    position: fixed; inset: -60%; z-index: 2; pointer-events: none; opacity: 0.05;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.8'/></svg>");
+    animation: grainShift 1.6s steps(4) infinite;
+  }
+  @keyframes grainShift {
+    0% {transform: translate(0,0);} 25% {transform: translate(-6%,4%);}
+    50% {transform: translate(4%,-6%);} 75% {transform: translate(-4%,-4%);} 100% {transform: translate(0,0);}
+  }
+
+  /* ═══════════ Hero ═══════════ */
+  .hero {
+    min-height: 100svh;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; padding: 90px 24px 120px;
+  }
+  .hero .tagline {
+    color: var(--aurora1);
+    font-size: clamp(12px, 1.9vw, 15px);
+    letter-spacing: 0.46em;
+    margin-bottom: 26px;
+    opacity: 0; animation: fadeUp 1.2s .2s ease both;
+  }
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: clamp(38px, 7.4vw, 70px);
+    letter-spacing: 0.06em;
+    line-height: 1.35;
+    opacity: 0; animation: fadeUp 1.4s .5s ease both;
+    background: linear-gradient(115deg, #ffffff 25%, #b9c6ff 45%, var(--aurora1) 58%, #ffffff 78%);
+    background-size: 250% 100%;
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: fadeUp 1.4s .5s ease both, heroSweep 9s 2s linear infinite;
+    text-shadow: none;
+    filter: drop-shadow(0 0 34px rgba(139,124,246,0.4));
+  }
+  @keyframes heroSweep { to { background-position: -250% 0; } }
+  .hero h1 small {
+    display: block;
+    font-family: var(--sans);
+    font-size: clamp(14px, 2.3vw, 20px);
+    letter-spacing: 0.26em;
+    margin-top: 20px;
+    -webkit-text-fill-color: var(--ink-dim);
+  }
+  .hero .catch {
+    margin-top: 36px;
+    font-family: var(--serif);
+    font-size: clamp(16px, 2.9vw, 23px);
+    color: var(--gold);
+    letter-spacing: 0.14em;
+    opacity: 0; animation: fadeUp 1.4s .9s ease both;
+  }
+  /* NOW CREATING チップ（回転ワード） */
+  .now {
+    display: inline-flex; align-items: center; gap: 12px;
+    margin-top: 44px; padding: 10px 26px;
+    border: 1px solid rgba(110,231,216,0.4);
+    border-radius: 999px;
+    font-size: 12.5px; letter-spacing: 0.22em;
+    color: var(--aurora1);
+    background: rgba(10,14,36,0.5);
+    backdrop-filter: blur(4px);
+    opacity: 0; animation: fadeUp 1.4s 1.2s ease both;
+  }
+  .now .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--magenta);
+    animation: pulse 1.6s infinite; }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(232,121,185,.6)} 50%{box-shadow:0 0 0 7px rgba(232,121,185,0)} }
+  .now #rotator { min-width: 9.5em; text-align: left; color: var(--ink); }
+  /* イコライザーバー */
+  .eq {
+    display: flex; gap: 5px; align-items: flex-end; justify-content: center;
+    height: 40px; margin-top: 38px;
+    opacity: 0; animation: fadeUp 1.4s 1.4s ease both;
+  }
+  .eq i {
+    width: 5px; border-radius: 3px 3px 0 0;
+    background: linear-gradient(180deg, var(--aurora1), var(--aurora2));
+    animation: eqB 1.1s ease-in-out infinite;
+    box-shadow: 0 0 12px rgba(110,231,216,0.5);
+  }
+  @keyframes eqB { 0%,100% { height: 18%; } 50% { height: 100%; } }
+  .scroll-cue {
+    position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+    color: var(--ink-dim); font-size: 11px; letter-spacing: 0.34em;
+    animation: bob 2.2s infinite ease-in-out;
+  }
+  @keyframes bob { 0%,100%{transform:translate(-50%,0)} 50%{transform:translate(-50%,10px)} }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(28px);} to { opacity: 1; transform: none;} }
+
+  /* ═══════════ 波形ディバイダー ═══════════ */
+  .wave-div { position: relative; z-index: 3; height: 70px; overflow: hidden; opacity: .6; }
+  .wave-div svg { width: 200%; height: 100%; animation: waveSlide 14s linear infinite; }
+  @keyframes waveSlide { to { transform: translateX(-50%); } }
+
+  /* ═══════════ 汎用: スクロール出現 ═══════════ */
+  .reveal { opacity: 0; transform: translateY(34px); transition: opacity 1s ease, transform 1s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+
+  /* ═══════════ About ═══════════ */
+  .about-card {
+    background: rgba(19,26,63,0.6);
+    border: 1px solid rgba(139,124,246,0.4);
+    border-radius: 20px;
+    padding: 44px 38px;
+    backdrop-filter: blur(8px);
+    font-size: clamp(15px, 2.2vw, 17px);
+    position: relative;
+    overflow: hidden;
+  }
+  .about-card::before { /* 角の光 */
+    content: ""; position: absolute; top: -60px; right: -60px;
+    width: 180px; height: 180px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(110,231,216,0.22), transparent 70%);
+  }
+  .about-card strong { color: var(--aurora1); font-weight: 700; }
+
+  /* ═══════════ Story ═══════════ */
+  .story-line { position: relative; margin-left: 14px; padding-left: 38px; }
+  .story-line::before {
+    content: ""; position: absolute; left: 0; top: 6px; bottom: 6px; width: 2px;
+    background: linear-gradient(180deg, #3d4479 0%, var(--aurora1) 58%, var(--gold) 100%);
+    box-shadow: 0 0 16px rgba(110,231,216,0.35);
+  }
+  .story-step { position: relative; padding: 0 0 50px; }
+  .story-step:last-child { padding-bottom: 0; }
+  .story-step::before {
+    content: ""; position: absolute; left: -45px; top: 8px;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: var(--night1); border: 3px solid var(--aurora2);
+    box-shadow: 0 0 14px rgba(139,124,246,0.6);
+  }
+  .story-step.turn::before { border-color: var(--aurora1); box-shadow: 0 0 14px rgba(110,231,216,0.7); }
+  .story-step.now2::before { border-color: var(--gold); box-shadow: 0 0 14px rgba(255,212,121,0.7); }
+  .story-step h3 {
+    font-family: var(--serif);
+    font-size: clamp(18px, 3vw, 23px);
+    margin-bottom: 10px; letter-spacing: 0.06em;
+  }
+  .story-step p { color: var(--ink-dim); font-size: clamp(14px, 2vw, 16px); }
+  .story-step .em { color: var(--ink); }
+
+  /* ═══════════ Three Faces ═══════════ */
+  .faces { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  @media (max-width: 720px) { .faces { grid-template-columns: 1fr; } }
+  .face {
+    --glow: var(--aurora1);
+    background: rgba(10,14,36,0.78);
+    border: 1px solid rgba(110,231,216,0.25);
+    border-radius: 18px;
+    padding: 38px 26px;
+    text-align: center;
+    position: relative; overflow: hidden;
+    transition: transform .4s ease, box-shadow .4s ease, border-color .4s ease;
+  }
+  .face:nth-child(2) { --glow: var(--aurora2); }
+  .face:nth-child(3) { --glow: var(--magenta); }
+  .face::before {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(ellipse 90% 50% at 50% -10%, color-mix(in srgb, var(--glow) 22%, transparent), transparent 65%);
+    opacity: 0; transition: opacity .4s ease;
+  }
+  .face:hover { transform: translateY(-8px); border-color: var(--glow);
+    box-shadow: 0 18px 44px color-mix(in srgb, var(--glow) 26%, transparent); }
+  .face:hover::before { opacity: 1; }
+  .face .icon { font-size: 42px; margin-bottom: 16px; display: block; }
+  .face .role { color: var(--glow); font-size: 12px; letter-spacing: 0.32em; margin-bottom: 10px; }
+  .face h3 { font-size: clamp(16px, 2.4vw, 19px); margin-bottom: 12px; }
+  .face p { color: var(--ink-dim); font-size: 14px; position: relative; }
+
+  /* ═══════════ CTA ═══════════ */
+  .cta { text-align: center; padding-bottom: 130px; }
+  .cta .lead {
+    font-family: var(--serif);
+    font-size: clamp(18px, 3.2vw, 26px);
+    margin-bottom: 44px; letter-spacing: 0.12em;
+  }
+  .cta-buttons { display: flex; gap: 22px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    position: relative; overflow: hidden;
+    display: inline-block; padding: 19px 46px; border-radius: 999px;
+    font-size: clamp(14px, 2.2vw, 16px); font-weight: 700;
+    letter-spacing: 0.08em; text-decoration: none;
+    transition: transform .3s ease, box-shadow .3s ease;
+  }
+  .btn::after { /* シャインスイープ */
+    content: ""; position: absolute; top: 0; bottom: 0; width: 46%;
+    left: -60%; transform: skewX(-24deg);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+    animation: shine 3.6s ease-in-out infinite;
+  }
+  .btn:nth-child(2)::after { animation-delay: 1.8s; }
+  @keyframes shine { 0%, 55% { left: -60%; } 85%, 100% { left: 130%; } }
+  .btn:hover { transform: translateY(-4px) scale(1.02); }
+  .btn-yt { background: linear-gradient(135deg, #ff5d5d, #ff8a5c); color: #fff;
+    box-shadow: 0 10px 34px rgba(255,93,93,0.4); }
+  .btn-note { background: linear-gradient(135deg, var(--aurora1), #4fd1b5); color: #06251f;
+    box-shadow: 0 10px 34px rgba(110,231,216,0.35); }
+  .btn small { display: block; font-size: 11px; font-weight: 400; opacity: .85; margin-top: 2px; }
+
+  /* ソーシャルアイコン列 */
+  .social-label {
+    margin-top: 52px; margin-bottom: 20px;
+    font-size: 11px; letter-spacing: 0.4em; color: var(--ink-dim);
+  }
+  .social-bar { display: flex; gap: 18px; justify-content: center; }
+  .social-bar a {
+    width: 52px; height: 52px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-dim);
+    border: 1px solid rgba(154,163,208,0.3);
+    background: rgba(10,14,36,0.5);
+    transition: transform .3s ease, color .3s ease, border-color .3s ease, box-shadow .3s ease;
+  }
+  .social-bar a svg { width: 22px; height: 22px; }
+  .social-bar a:hover {
+    transform: translateY(-5px);
+    color: var(--ink);
+    border-color: var(--aurora1);
+    box-shadow: 0 10px 26px rgba(110,231,216,0.28);
+  }
+
+  footer {
+    text-align: center; padding: 48px 20px 64px;
+    color: var(--ink-dim); font-size: 12px; letter-spacing: 0.16em;
+    position: relative; z-index: 3;
+  }
+  footer .sig { font-family: var(--serif); font-size: 15px; color: var(--ink); margin-bottom: 8px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sky"></div>
+<canvas id="fx"></canvas>
+
+<!-- 走馬灯ギャラリー（背景・実際の作品サムネイルが流れる。JSが生成） -->
+<div class="lantern" aria-hidden="true">
+  <div class="reel r1" id="reel1"></div>
+  <div class="reel r2" id="reel2"></div>
+</div>
+<div class="grain"></div>
+
+<!-- ═══════ Hero ═══════ -->
+<section class="hero">
+  <div class="inner">
+    <p class="tagline">MUSICIAN FROM ANOTHER WORLD</p>
+    <h1>異世界の音楽家
+      <small>AI Motion Musics</small>
+    </h1>
+    <p class="catch">挫折を糧に。AIで、音楽と物語を。</p>
+
+    <!-- ブランドストーリー動画（90秒） -->
+    <div class="theater">
+      <div class="screen">
+        <span class="badge">BRAND STORY FILM</span>
+        <video id="bv" src="assets/brand-story-web.mp4" poster="assets/brand-story-poster.jpg"
+               preload="metadata" playsinline></video>
+        <div class="veil" id="veil" role="button" aria-label="ブランドストーリー動画を再生">
+          <div class="playbtn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          <p class="vlabel">90秒でわかる、僕の物語。</p>
+          <p class="vsub">sound on — 90 sec</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="now"><span class="dot"></span>NOW CREATING — <span id="rotator">AI MUSIC</span></div>
+    <div class="eq" id="eq"></div>
+  </div>
+  <div class="scroll-cue">SCROLL ▾</div>
+</section>
+
+<div class="wave-div" aria-hidden="true">
+  <svg viewBox="0 0 1200 70" preserveAspectRatio="none">
+    <path d="M0,35 C60,10 120,60 180,35 C240,10 300,60 360,35 C420,10 480,60 540,35 C600,10 660,60 720,35 C780,10 840,60 900,35 C960,10 1020,60 1080,35 C1140,10 1200,60 1260,35 C1320,10 1380,60 1440,35 C1500,10 1560,60 1620,35 C1680,10 1740,60 1800,35 C1860,10 1920,60 1980,35 C2040,10 2100,60 2160,35 C2220,10 2280,60 2340,35 C2400,10 2460,60 2520,35"
+      fill="none" stroke="rgba(110,231,216,0.45)" stroke-width="1.6"/>
+  </svg>
+</div>
+
+<!-- ═══════ About ═══════ -->
+<section>
+  <div class="inner reveal">
+    <h2>僕は、何者か</h2>
+    <div class="about-card">
+      <p>はじめまして、instkoniです。昼は<strong>ITストラテジスト／プロジェクトマネージャ</strong>として働きながら、夜は<strong>AIで音楽とミュージックビデオを作る</strong>クリエイターをしています。</p>
+      <p style="margin-top:14px">「異世界の音楽家」という名前には、好きなアニメやファンタジーの世界観、そして音楽を中心としたチャンネルへの想いを込めました。AIで創り出す世界は、まさに「異世界」。現実とは違うもうひとつの世界の音を、こちら側へ持ち帰ってくる——そんな活動をしています。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ Story ═══════ -->
+<section>
+  <div class="inner reveal">
+    <h2>挫折から始まる、物語</h2>
+    <div class="story-line">
+      <div class="story-step">
+        <h3>18歳。順風満帆だった日々が、一変した。</h3>
+        <p>進学の夢が閉ざされ、積み立てた<span class="em">100万円</span>も失った。未来が真っ白になった年。</p>
+      </div>
+      <div class="story-step turn">
+        <h3>それでも、学ぶことは諦めなかった。</h3>
+        <p>働きながら独学で資格を取り続けた。<span class="em">手取り16万円</span>のパソコン教室インストラクターから始まり、取得した資格は<span class="em">10種類以上</span>に。</p>
+      </div>
+      <div class="story-step now2">
+        <h3>いま。ITの最前線と、創作の異世界を生きる。</h3>
+        <p>ITストラテジスト／プロジェクトマネージャとして働きながら、AIで音楽と映像を作り、その知見を発信している。<span class="em">人生は、いつからでも変えられる。</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ Three Faces ═══════ -->
+<section>
+  <div class="inner reveal">
+    <h2>三つの顔で、全力を尽くす</h2>
+    <div class="faces">
+      <div class="face">
+        <span class="icon">💼</span>
+        <p class="role">WORK</p>
+        <h3>ITストラテジスト／PM</h3>
+        <p>IT業界20年。インフラから戦略まで、現場で培った専門性。</p>
+      </div>
+      <div class="face">
+        <span class="icon">📝</span>
+        <p class="role">SHARE</p>
+        <h3>AI情報発信</h3>
+        <p>noteとSNSで、最新AIの検証と活用ノウハウを発信中。</p>
+      </div>
+      <div class="face">
+        <span class="icon">🎵</span>
+        <p class="role">CREATE</p>
+        <h3>AI音楽制作</h3>
+        <p>YouTubeで、AIによる音楽とミュージックビデオを公開。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ Works: 作品の走馬灯（3D回転ランタン） ═══════ -->
+<section class="works">
+  <div class="reveal">
+    <h2>作品の、走馬灯</h2>
+    <p class="sub">これまでの旅の記録が、灯りの中をめぐる。</p>
+    <div class="stage">
+      <div class="ring" id="ring"></div>
+      <div class="floor"></div>
+    </div>
+    <p class="more"><a href="https://www.youtube.com/@ai_motion_musics" target="_blank" rel="noopener">すべての作品をYouTubeで観る →</a></p>
+  </div>
+</section>
+
+<!-- ═══════ CTA ═══════ -->
+<section class="cta">
+  <div class="inner reveal">
+    <p class="lead">異世界の音が、聴こえてきましたか。</p>
+    <div class="cta-buttons">
+      <a class="btn btn-yt" href="https://www.youtube.com/@ai_motion_musics" target="_blank" rel="noopener">
+        ▶ YouTubeで聴く
+        <small>異世界の音楽家 / AI Motion Musics</small>
+      </a>
+      <a class="btn btn-note" href="https://note.com/instkoni" target="_blank" rel="noopener">
+        📖 noteで読む
+        <small>AI活用の検証とノウハウ</small>
+      </a>
+    </div>
+    <p class="social-label">FOLLOW EVERYWHERE</p>
+    <div class="social-bar">
+      <a href="https://www.instagram.com/ai_motion_musics" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/></svg>
+      </a>
+      <a href="https://x.com/instkoni" target="_blank" rel="noopener" aria-label="X" title="X (Twitter)">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.53 3H20.5l-6.49 7.41L21.75 21h-6.02l-4.71-6.16L5.6 21H2.63l6.94-7.93L2.25 3h6.17l4.26 5.63L17.53 3Zm-1.06 16.2h1.64L7.62 4.71H5.86L16.47 19.2Z"/></svg>
+      </a>
+      <a href="https://www.tiktok.com/@ai_motion_musics" target="_blank" rel="noopener" aria-label="TikTok" title="TikTok">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.82a4.28 4.28 0 0 1-1.06-2.82h-3.02v11.9a2.4 2.4 0 1 1-2.4-2.4c.2 0 .4.03.6.08V9.5a5.4 5.4 0 1 0 4.8 5.37V9.01a7.3 7.3 0 0 0 4.28 1.37V7.36a4.28 4.28 0 0 1-3.2-1.54Z"/></svg>
+      </a>
+      <a href="https://www.youtube.com/@ai_motion_musics" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.6 7.2a2.5 2.5 0 0 0-1.76-1.77C18.25 5 12 5 12 5s-6.25 0-7.84.43A2.5 2.5 0 0 0 2.4 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .4 4.8 2.5 2.5 0 0 0 1.76 1.77C5.75 19 12 19 12 19s6.25 0 7.84-.43a2.5 2.5 0 0 0 1.76-1.77A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.8ZM10 15V9l5.2 3-5.2 3Z"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p class="sig">挫折を糧に。— instkoni</p>
+  <p>異世界の音楽家 / AI Motion Musics</p>
+</footer>
+
+<script>
+/* ═══════ イコライザーバー生成 ═══════ */
+const eq = document.getElementById('eq');
+for (let i = 0; i < 24; i++) {
+  const b = document.createElement('i');
+  b.style.animationDelay = (Math.sin(i * 1.7) * 0.55).toFixed(2) + 's';
+  b.style.animationDuration = (0.8 + Math.abs(Math.sin(i * 0.9)) * 0.9).toFixed(2) + 's';
+  eq.appendChild(b);
+}
+
+/* ═══════ NOW CREATING ワード回転 ═══════ */
+const words = ['AI MUSIC', 'MUSIC VIDEO', 'ORIGINAL STORY', 'ANOTHER WORLD'];
+let wi = 0;
+const rot = document.getElementById('rotator');
+setInterval(() => {
+  wi = (wi + 1) % words.length;
+  rot.style.transition = 'opacity .45s';
+  rot.style.opacity = 0;
+  setTimeout(() => { rot.textContent = words[wi]; rot.style.opacity = 1; }, 460);
+}, 3200);
+
+/* ═══════ スクロール出現 ═══════ */
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) e.target.classList.add('in');
+}), { threshold: 0.15 });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+/* ═══════ Canvas: 音のパーティクル（音符＋光の尾＋星屑） ═══════ */
+const cv = document.getElementById('fx');
+const ctx = cv.getContext('2d');
+let W, H, DPR;
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = cv.width = innerWidth * DPR;
+  H = cv.height = innerHeight * DPR;
+  cv.style.width = innerWidth + 'px';
+  cv.style.height = innerHeight + 'px';
+}
+resize(); addEventListener('resize', resize);
+
+const GLYPHS = ['♪', '♫', '♩', '♬'];
+const COLORS = ['110,231,216', '139,124,246', '255,212,121', '232,121,185'];
+class Note {
+  constructor(init) { this.reset(init); }
+  reset(init) {
+    this.depth = 0.35 + Math.random() * 0.65;            // 奥行き（大きさ/速度/透明度に効く）
+    this.x = Math.random() * W;
+    this.y = init ? Math.random() * H : H + 60 * DPR;
+    this.vy = (0.25 + Math.random() * 0.5) * this.depth;  // 上昇
+    this.sway = 0.5 + Math.random() * 1.4;                // 揺らぎ幅
+    this.phase = Math.random() * Math.PI * 2;
+    this.spin = (Math.random() - 0.5) * 0.02;
+    this.rot = (Math.random() - 0.5) * 0.6;
+    this.size = (13 + Math.random() * 20) * this.depth;
+    this.g = GLYPHS[(Math.random() * GLYPHS.length) | 0];
+    this.c = COLORS[(Math.random() * COLORS.length) | 0];
+    this.trail = [];
+  }
+  step(t) {
+    this.phase += 0.012;
+    this.rot += this.spin;
+    this.x += Math.sin(this.phase) * this.sway * this.depth;
+    this.y -= this.vy * DPR * 1.6;
+    this.trail.unshift({x: this.x, y: this.y});
+    if (this.trail.length > 14) this.trail.pop();
+    if (this.y < -80 * DPR) this.reset(false);
+  }
+  draw() {
+    const a = 0.28 + this.depth * 0.5;
+    /* 光の尾 */
+    for (let i = this.trail.length - 1; i > 0; i--) {
+      const p = this.trail[i];
+      const fade = (1 - i / this.trail.length) * 0.16 * this.depth;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, this.size * 0.16 * (1 - i / this.trail.length) + 0.6, 0, 7);
+      ctx.fillStyle = `rgba(${this.c},${fade})`;
+      ctx.fill();
+    }
+    /* 音符本体（グロー付き） */
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(Math.sin(this.rot) * 0.35);
+    ctx.font = `${this.size * DPR / (DPR)}px serif`;
+    ctx.shadowColor = `rgba(${this.c},0.9)`;
+    ctx.shadowBlur = 16 * this.depth * DPR;
+    ctx.fillStyle = `rgba(${this.c},${a})`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(this.g, 0, 0);
+    ctx.restore();
+  }
+}
+/* 星屑（微細な粒が漂う） */
+class Dust {
+  constructor() { this.reset(true); }
+  reset(init) {
+    this.x = Math.random() * W;
+    this.y = init ? Math.random() * H : H + 8;
+    this.v = 0.06 + Math.random() * 0.16;
+    this.r = (0.5 + Math.random() * 1.1) * DPR;
+    this.a = 0.08 + Math.random() * 0.2;
+    this.ph = Math.random() * Math.PI * 2;
+  }
+  step() {
+    this.ph += 0.008;
+    this.x += Math.sin(this.ph) * 0.2;
+    this.y -= this.v * DPR;
+    if (this.y < -10) this.reset(false);
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, 7);
+    ctx.fillStyle = `rgba(238,240,255,${this.a * (0.6 + 0.4 * Math.sin(this.ph * 3))})`;
+    ctx.fill();
+  }
+}
+const notes = Array.from({length: innerWidth < 720 ? 10 : 16}, () => new Note(true));
+const dust  = Array.from({length: innerWidth < 720 ? 30 : 60}, () => new Dust());
+(function loop(t) {
+  ctx.clearRect(0, 0, W, H);
+  dust.forEach(d => { d.step(); d.draw(); });
+  notes.forEach(n => { n.step(t); n.draw(); });
+  requestAnimationFrame(loop);
+})(0);
+
+/* ═══════ 作品ギャラリー（実サムネイル・YouTube動画） ═══════ */
+const GALLERY = [
+  { img: 'assets/gallery/g01.jpg', id: 'FcIkKF2SoDY' },
+  { img: 'assets/gallery/g02.jpg', id: 'h7LVvypnV10' },
+  { img: 'assets/gallery/g03.jpg', id: 'DiHkDvYrqx8' },
+  { img: 'assets/gallery/g04.jpg', id: '6QlqT12z1Ao' },
+  { img: 'assets/gallery/g05.jpg', id: 'uEvsC7dl4y8' },
+  { img: 'assets/gallery/g06.jpg', id: 'yVV3GUVI4NY' },
+  { img: 'assets/gallery/g07.jpg', id: 'sDkoyQsuybA' },
+  { img: 'assets/gallery/g08.jpg', id: 'l5uOY46lx0A' },
+  { img: 'assets/gallery/g09.jpg', id: 's97sv5JKjHs' },
+  { img: 'assets/gallery/g10.jpg', id: '4bx9QnBM8Wo' },
+  { img: 'assets/gallery/g11.jpg', id: 'blV9EkyPVIA' },
+  { img: 'assets/gallery/g12.jpg', id: 'm50q3GJ06zY' },
+  { img: 'assets/gallery/g13.jpg', id: 'bu7oYo6zruE' },
+  { img: 'assets/gallery/g14.jpg', id: '-5iW8Ryjy50' },
+];
+
+/* 背景リール（2列・逆方向）: シームレスループのため内容を2巡分並べる */
+function buildReel(el, items) {
+  const seq = [...items, ...items];
+  el.innerHTML = seq.map(g =>
+    `<div class="frame"><img src="${g.img}" alt="" loading="lazy"></div>`
+  ).join('');
+}
+buildReel(document.getElementById('reel1'), GALLERY.slice(0, 7));
+buildReel(document.getElementById('reel2'), GALLERY.slice(7, 14));
+
+/* 3D回転ランタン: 円筒状にカードを配置して回し続ける */
+(function buildRing() {
+  const ring = document.getElementById('ring');
+  const n = GALLERY.length;
+  const cardW = innerWidth < 720 ? 148 : 264;
+  ring.style.setProperty('--cardW', cardW + 'px');
+  const R = Math.round((cardW / 2) / Math.tan(Math.PI / n)) + 26;
+  ring.innerHTML = GALLERY.map((g, i) =>
+    `<a class="card" href="https://www.youtube.com/watch?v=${g.id}" target="_blank" rel="noopener"
+        style="transform: rotateY(${(360 / n * i).toFixed(2)}deg) translateZ(${R}px)">
+       <img src="${g.img}" alt="作品サムネイル" loading="lazy">
+     </a>`
+  ).join('');
+})();
+
+/* ═══════ ブランド動画シアター: クリックで音ありスタート ═══════ */
+const bv = document.getElementById('bv');
+const veil = document.getElementById('veil');
+veil.addEventListener('click', () => {
+  veil.classList.add('off');
+  bv.controls = true;
+  bv.play();
+});
+bv.addEventListener('ended', () => {
+  bv.controls = false;
+  veil.classList.remove('off');
+});
+</script>
+</body>
+</html>
