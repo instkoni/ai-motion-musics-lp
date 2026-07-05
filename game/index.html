@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>異世界の音楽家 〜音の欠片〜</title>
+<meta name="description" content="異世界を旅する音楽家が、散らばった「音の欠片」を集めて失われたメロディを完成させる探索ゲーム。すべてコードだけで描かれています。">
+<meta property="og:title" content="異世界の音楽家 〜音の欠片〜">
+<meta property="og:description" content="音の欠片を12個集めて、失われたメロディを取り戻そう。画像も音声ファイルも使わず、すべてコードで作られたブラウザゲーム。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://instkoni.github.io/ai-motion-musics-lp/game/">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; background: #05070f;
+    font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; touch-action: none;
+    -webkit-user-select: none; user-select: none; }
+  #game { position: fixed; inset: 0; display: block; }
+  .ui { position: fixed; inset: 0; pointer-events: none; color: #eef0ff; }
+  /* タイトル画面 */
+  #title {
+    position: fixed; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 18px; text-align: center;
+    background: radial-gradient(ellipse 90% 70% at 50% 30%, rgba(19,26,63,0.55), rgba(5,7,15,0.88));
+    transition: opacity 1.2s ease; cursor: pointer; color: #eef0ff; padding: 24px;
+  }
+  #title.off { opacity: 0; pointer-events: none; }
+  #title .sub { letter-spacing: .42em; font-size: 12px; color: #6ee7d8; }
+  #title h1 { font-size: clamp(30px, 7vw, 54px); letter-spacing: .1em; font-weight: 600;
+    text-shadow: 0 0 34px rgba(139,124,246,.65); }
+  #title h1 small { display: block; font-size: clamp(15px, 3vw, 22px); margin-top: 10px;
+    color: #ffd479; letter-spacing: .2em; }
+  #title p { color: #98a1cf; font-size: clamp(12px, 2.6vw, 14px); line-height: 2; }
+  #title .start { margin-top: 14px; padding: 13px 40px; border: 1px solid rgba(110,231,216,.6);
+    border-radius: 999px; letter-spacing: .3em; font-size: 13px; color: #6ee7d8;
+    animation: pulse 2.2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(110,231,216,.35);} 50% { box-shadow: 0 0 24px 4px rgba(110,231,216,.25);} }
+  /* HUD */
+  #hud { position: fixed; top: 14px; left: 0; right: 0; bottom: auto; height: 32px; display: none;
+    justify-content: center; gap: 6px; align-items: center; }
+  #hud .slot { width: 16px; height: 26px; border-radius: 5px;
+    border: 1px solid rgba(154,163,208,.4); background: rgba(10,14,36,.5);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: rgba(238,240,255,.25); transition: all .4s ease; }
+  #hud .slot.got { color: #ffd479; border-color: rgba(255,212,121,.8);
+    box-shadow: 0 0 12px rgba(255,212,121,.5); background: rgba(45,36,10,.6); transform: translateY(-3px); }
+  #stat { position: fixed; top: 50px; left: 0; right: 0; display: none; text-align: center;
+    font-size: 11px; letter-spacing: .28em; color: #98a1cf; }
+  #hint { position: fixed; bottom: 20px; left: 0; right: 0; text-align: center;
+    font-size: 11.5px; letter-spacing: .2em; color: rgba(152,161,207,.8); display: none; }
+  /* フィナーレ */
+  #fin { position: fixed; inset: 0; display: none; flex-direction: column; align-items: center;
+    justify-content: center; gap: 20px; text-align: center; color: #eef0ff;
+    background: radial-gradient(ellipse 80% 60% at 50% 45%, rgba(19,26,63,.25), rgba(5,7,15,.72));
+    opacity: 0; transition: opacity 2s ease; padding: 24px; }
+  #fin.on { display: flex; opacity: 1; }
+  #fin h2 { font-size: clamp(24px, 5.6vw, 42px); letter-spacing: .14em;
+    text-shadow: 0 0 40px rgba(255,212,121,.6); }
+  #fin p { color: #98a1cf; line-height: 2.1; font-size: clamp(13px, 2.8vw, 15px); }
+  #fin .btns { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; pointer-events: auto; }
+  #fin .btn { padding: 12px 32px; border-radius: 999px; border: 1px solid rgba(110,231,216,.55);
+    color: #6ee7d8; letter-spacing: .18em; font-size: 13px; cursor: pointer;
+    background: rgba(10,14,36,.6); text-decoration: none; font-family: inherit; }
+  #fin .btn:hover { color: #eef0ff; border-color: #eef0ff; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="title">
+  <p class="sub">MUSICIAN FROM ANOTHER WORLD</p>
+  <h1>異世界の音楽家<small>〜 音の欠片 〜</small></h1>
+  <p>この世界から、音楽が失われてしまった。<br>
+     夜空に散らばった <span style="color:#ffd479">音の欠片 ×12</span> を集めて、メロディを取り戻そう。<br><br>
+     🖱 PC: 矢印キー / WASD で飛ぶ　　📱 スマホ: 行きたい方向をタッチ</p>
+  <div class="start">タップして 旅をはじめる</div>
+</div>
+
+<div id="hud" class="ui"></div>
+<div id="stat" class="ui">♪ 0 / 12</div>
+<div id="hint" class="ui">光る欠片を探して。羅針盤の矢印が導いてくれる。</div>
+
+<div id="fin">
+  <h2>世界に、音楽が戻った。</h2>
+  <p id="fintime"></p>
+  <div class="btns">
+    <button class="btn" id="replay">もういちど旅する</button>
+    <a class="btn" href="../" target="_self">旅人のことを知る →</a>
+  </div>
+</div>
+
+<script>
+/* ═══════════════ 基盤 ═══════════════ */
+const cv = document.getElementById('game');
+const cx = cv.getContext('2d');
+let VW, VH, DPR;
+function resize() {
+  DPR = Math.min(devicePixelRatio || 1, 2);
+  VW = innerWidth; VH = innerHeight;
+  cv.width = VW * DPR; cv.height = VH * DPR;
+  cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+resize(); addEventListener('resize', resize);
+
+const WORLD = { w: 4200, h: 2400 };
+const rand = (a, b) => a + Math.random() * (b - a);
+
+/* ═══════════════ 音（すべてコードで生成） ═══════════════ */
+let AC = null, master = null, padGain = null;
+function initAudio() {
+  AC = new (window.AudioContext || window.webkitAudioContext)();
+  master = AC.createGain(); master.gain.value = 0.6; master.connect(AC.destination);
+  /* アンビエントパッド: デチューンした2つの三角波＋ゆっくり息づくゲイン */
+  padGain = AC.createGain(); padGain.gain.value = 0.0; padGain.connect(master);
+  [110, 110.7, 164.8].forEach((f, i) => {
+    const o = AC.createOscillator(); o.type = 'triangle'; o.frequency.value = f;
+    const g = AC.createGain(); g.gain.value = i === 2 ? 0.05 : 0.09;
+    o.connect(g); g.connect(padGain); o.start();
+  });
+  padGain.gain.linearRampToValueAtTime(0.5, AC.currentTime + 4);
+  /* パッドの呼吸 */
+  const lfo = AC.createOscillator(), lg = AC.createGain();
+  lfo.frequency.value = 0.08; lg.gain.value = 0.18;
+  lfo.connect(lg); lg.connect(padGain.gain); lfo.start();
+}
+/* 単音（鐘のような音色: 基音＋倍音を指数減衰） */
+function chime(freq, when = 0, dur = 1.6, vol = 0.5) {
+  if (!AC) return;
+  const t = AC.currentTime + when;
+  [[1, 1], [2, 0.4], [3, 0.18]].forEach(([m, a]) => {
+    const o = AC.createOscillator(); o.type = 'sine'; o.frequency.value = freq * m;
+    const g = AC.createGain();
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol * a, t + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.1);
+  });
+}
+/* 12音のメロディ（ペンタトニック=どの順で鳴っても心地よい） */
+const MELODY = [523.25, 587.33, 659.25, 784.0, 880.0, 1046.5, 880.0, 784.0, 659.25, 784.0, 1046.5, 1318.5];
+function finaleSong() {
+  const beat = 0.34;
+  MELODY.forEach((f, i) => chime(f, i * beat, 1.8, 0.5));
+  /* 締めの和音 */
+  const end = MELODY.length * beat + 0.2;
+  [523.25, 659.25, 784.0, 1046.5].forEach(f => chime(f, end, 3.5, 0.4));
+  if (padGain) padGain.gain.linearRampToValueAtTime(0.75, AC.currentTime + end);
+}
+
+/* ═══════════════ 世界の生成 ═══════════════ */
+/* 星: 3層パララックス */
+const stars = [];
+for (let L = 0; L < 3; L++)
+  for (let i = 0; i < 90; i++)
+    stars.push({ x: Math.random() * WORLD.w, y: Math.random() * WORLD.h,
+      r: (0.4 + Math.random() * 1.3) * (L + 1) * 0.5, p: 0.15 + L * 0.3,
+      tw: Math.random() * Math.PI * 2 });
+/* 浮島 */
+const islands = [];
+for (let i = 0; i < 14; i++) {
+  islands.push({ x: rand(200, WORLD.w - 200), y: rand(300, WORLD.h - 200),
+    w: rand(130, 320), h: rand(36, 66), hue: [200, 255, 160, 280][i % 4],
+    bob: Math.random() * Math.PI * 2, crystals: 2 + (i % 3) });
+}
+/* 音の欠片×12: 世界に散らす（近すぎない配置） */
+const shards = [];
+while (shards.length < 12) {
+  const s = { x: rand(300, WORLD.w - 300), y: rand(260, WORLD.h - 260),
+    ph: Math.random() * Math.PI * 2, got: false };
+  if (shards.every(o => Math.hypot(o.x - s.x, o.y - s.y) > 560) &&
+      Math.hypot(s.x - 400, s.y - WORLD.h / 2) > 400) shards.push(s);
+}
+/* パーティクル */
+const parts = [];
+function burst(x, y, hue, n = 26) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, sp = rand(0.5, 3.4);
+    parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+      life: 1, d: rand(0.008, 0.02), r: rand(1.5, 3.6), hue });
+  }
+}
+
+/* ═══════════════ プレイヤー（旅の音楽家） ═══════════════ */
+const P = { x: 400, y: WORLD.h / 2, vx: 0, vy: 0, dir: 1, trail: [] };
+const keys = {};
+addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+let touch = null;
+addEventListener('pointerdown', e => { if (state === 'play') touch = { x: e.clientX, y: e.clientY }; });
+addEventListener('pointermove', e => { if (touch) touch = { x: e.clientX, y: e.clientY }; });
+addEventListener('pointerup', () => touch = null);
+
+/* ═══════════════ 進行管理 ═══════════════ */
+let state = 'title', got = 0, t0 = 0, time = 0, finT = 0;
+const hud = document.getElementById('hud');
+for (let i = 0; i < 12; i++) { const d = document.createElement('div'); d.className = 'slot'; d.textContent = '♪'; hud.appendChild(d); }
+const titleEl = document.getElementById('title'), statEl = document.getElementById('stat'),
+      hintEl = document.getElementById('hint'), finEl = document.getElementById('fin');
+
+titleEl.addEventListener('click', () => {
+  if (state !== 'title') return;
+  initAudio(); chime(659.25, 0, 1.2, 0.4);
+  titleEl.classList.add('off');
+  hud.style.display = 'flex'; statEl.style.display = 'block'; hintEl.style.display = 'block';
+  setTimeout(() => hintEl.style.opacity = 0.0, 6000);
+  hintEl.style.transition = 'opacity 2s ease';
+  state = 'play'; t0 = performance.now();
+});
+document.getElementById('replay').addEventListener('click', () => {
+  shards.forEach(s => s.got = false); got = 0; finT = 0;
+  document.querySelectorAll('#hud .slot').forEach(d => d.classList.remove('got'));
+  statEl.textContent = '♪ 0 / 12';
+  P.x = 400; P.y = WORLD.h / 2; P.vx = P.vy = 0;
+  finEl.classList.remove('on'); setTimeout(() => finEl.style.display = 'none', 2000);
+  state = 'play'; t0 = performance.now();
+  if (padGain) padGain.gain.linearRampToValueAtTime(0.5, AC.currentTime + 2);
+});
+
+/* ═══════════════ 描画ヘルパー ═══════════════ */
+function drawNoteGlyph(x, y, s, color, glow) {
+  /* 八分音符を線と楕円で描く（フォント・画像不使用） */
+  cx.save(); cx.translate(x, y); cx.scale(s, s);
+  if (glow) { cx.shadowColor = glow; cx.shadowBlur = 14; }
+  cx.fillStyle = color; cx.strokeStyle = color; cx.lineWidth = 1.6;
+  cx.beginPath(); cx.ellipse(-3, 6, 4.4, 3.2, -0.35, 0, 7); cx.fill();      /* たま */
+  cx.beginPath(); cx.moveTo(1, 5); cx.lineTo(1, -9); cx.stroke();            /* ぼう */
+  cx.beginPath(); cx.moveTo(1, -9); cx.quadraticCurveTo(8, -7, 9, -1);       /* はた */
+  cx.quadraticCurveTo(5.5, -4.5, 1, -4.5); cx.closePath(); cx.fill();
+  cx.restore();
+}
+function aurora(camX, camY, boost) {
+  /* オーロラのリボン×2（サイン波＋グラデーション） */
+  const T = performance.now() / 1000;
+  for (let k = 0; k < 2; k++) {
+    const base = VH * (0.16 + k * 0.1) - camY * 0.06;
+    cx.beginPath();
+    for (let x = -40; x <= VW + 40; x += 24) {
+      const y = base + Math.sin(x * 0.004 + T * (0.5 + k * 0.25) + k * 2) * 34
+                     + Math.sin(x * 0.0016 - T * 0.3) * 50;
+      x === -40 ? cx.moveTo(x, y) : cx.lineTo(x, y);
+    }
+    const g = cx.createLinearGradient(0, 0, VW, 0);
+    g.addColorStop(0, `rgba(110,231,216,${0.10 + boost * 0.25})`);
+    g.addColorStop(0.5, `rgba(139,124,246,${0.13 + boost * 0.3})`);
+    g.addColorStop(1, `rgba(232,121,185,${0.09 + boost * 0.22})`);
+    cx.strokeStyle = g; cx.lineWidth = 46 + boost * 50; cx.lineCap = 'round';
+    cx.save(); cx.filter = 'blur(14px)'; cx.stroke(); cx.restore();
+  }
+}
+
+/* ═══════════════ メインループ ═══════════════ */
+function loop() {
+  requestAnimationFrame(loop);
+  const T = performance.now() / 1000;
+
+  /* --- 更新 --- */
+  if (state === 'play' || state === 'fin') {
+    if (state === 'play') {
+      const AC_ = 0.34;
+      if (keys['arrowleft'] || keys['a']) P.vx -= AC_;
+      if (keys['arrowright'] || keys['d']) P.vx += AC_;
+      if (keys['arrowup'] || keys['w']) P.vy -= AC_;
+      if (keys['arrowdown'] || keys['s']) P.vy += AC_;
+      if (touch) { /* タッチ: 画面中心から見た方向へ */
+        P.vx += (touch.x - VW / 2) / VW * 1.1;
+        P.vy += (touch.y - VH / 2) / VH * 1.1;
+      }
+      P.vx *= 0.955; P.vy *= 0.955;
+      const spmax = 7.5, sp = Math.hypot(P.vx, P.vy);
+      if (sp > spmax) { P.vx *= spmax / sp; P.vy *= spmax / sp; }
+      P.x = Math.max(60, Math.min(WORLD.w - 60, P.x + P.vx));
+      P.y = Math.max(60, Math.min(WORLD.h - 60, P.y + P.vy));
+      if (Math.abs(P.vx) > 0.2) P.dir = P.vx > 0 ? 1 : -1;
+      time = (performance.now() - t0) / 1000;
+
+      /* 収集判定 */
+      shards.forEach((s, i) => {
+        if (!s.got && Math.hypot(s.x - P.x, s.y - P.y) < 46) {
+          s.got = true; got++;
+          chime(MELODY[got - 1], 0, 1.8, 0.55);
+          burst(s.x, s.y, 46, 34);
+          hud.children[got - 1].classList.add('got');
+          statEl.textContent = `♪ ${got} / 12`;
+          if (got >= 12) {
+            state = 'fin'; finT = T;
+            setTimeout(finaleSong, 600);
+            document.getElementById('fintime').innerHTML =
+              `散らばった12の欠片が、ひとつの歌になりました。<br>旅の時間: ${Math.floor(time / 60)}分${Math.floor(time % 60)}秒`;
+            setTimeout(() => { finEl.style.display = 'flex'; requestAnimationFrame(() => finEl.classList.add('on')); }, 2600);
+          }
+        }
+      });
+    }
+    P.trail.unshift({ x: P.x, y: P.y });
+    if (P.trail.length > 26) P.trail.pop();
+  }
+
+  /* --- カメラ --- */
+  const camX = Math.max(0, Math.min(WORLD.w - VW, P.x - VW / 2));
+  const camY = Math.max(0, Math.min(WORLD.h - VH, P.y - VH / 2));
+
+  /* --- 描画 --- */
+  /* 空 */
+  const sky = cx.createLinearGradient(0, 0, 0, VH);
+  sky.addColorStop(0, '#0a0e24'); sky.addColorStop(0.55, '#0b1030'); sky.addColorStop(1, '#05070f');
+  cx.fillStyle = sky; cx.fillRect(0, 0, VW, VH);
+  /* 月 */
+  const mg = cx.createRadialGradient(VW * 0.8, VH * 0.18, 4, VW * 0.8, VH * 0.18, 90);
+  mg.addColorStop(0, 'rgba(255,244,214,0.9)'); mg.addColorStop(0.25, 'rgba(255,244,214,0.28)'); mg.addColorStop(1, 'transparent');
+  cx.fillStyle = mg; cx.fillRect(VW * 0.8 - 100, VH * 0.18 - 100, 200, 200);
+
+  const boost = state === 'fin' ? Math.min(1, (T - finT) / 3) : 0;
+  aurora(camX, camY, boost);
+
+  /* 星（パララックス＋またたき） */
+  stars.forEach(s => {
+    const x = ((s.x - camX * s.p) % WORLD.w + WORLD.w) % WORLD.w * (VW / WORLD.w) * (WORLD.w / VW);
+    const sx = ((s.x - camX * s.p) % (VW + 200) + VW + 200) % (VW + 200) - 100;
+    const sy = ((s.y - camY * s.p) % (VH + 200) + VH + 200) % (VH + 200) - 100;
+    const a = 0.35 + 0.65 * Math.abs(Math.sin(T * 1.4 + s.tw));
+    cx.beginPath(); cx.arc(sx, sy, s.r, 0, 7);
+    cx.fillStyle = `rgba(238,240,255,${a * 0.8})`; cx.fill();
+  });
+
+  /* 浮島 */
+  islands.forEach(l => {
+    const x = l.x - camX, y = l.y - camY + Math.sin(T * 0.5 + l.bob) * 8;
+    if (x < -400 || x > VW + 400 || y < -200 || y > VH + 200) return;
+    cx.save(); cx.translate(x, y);
+    /* 島本体（上面が光る岩塊） */
+    const g = cx.createLinearGradient(0, -l.h, 0, l.h * 1.6);
+    g.addColorStop(0, `hsla(${l.hue},60%,72%,0.85)`);
+    g.addColorStop(0.18, `hsla(${l.hue},38%,30%,0.9)`);
+    g.addColorStop(1, `hsla(${l.hue},45%,8%,0.95)`);
+    cx.beginPath();
+    cx.moveTo(-l.w / 2, 0);
+    cx.quadraticCurveTo(-l.w * 0.2, -l.h * 0.8, l.w * 0.15, -l.h * 0.7);
+    cx.quadraticCurveTo(l.w / 2, -l.h * 0.5, l.w / 2, 0);
+    cx.quadraticCurveTo(l.w * 0.22, l.h * 1.7, 0, l.h * 1.9);
+    cx.quadraticCurveTo(-l.w * 0.3, l.h * 1.5, -l.w / 2, 0);
+    cx.closePath(); cx.fillStyle = g; cx.fill();
+    /* 上面の光る縁 */
+    cx.beginPath();
+    cx.moveTo(-l.w / 2, 0);
+    cx.quadraticCurveTo(-l.w * 0.2, -l.h * 0.8, l.w * 0.15, -l.h * 0.7);
+    cx.quadraticCurveTo(l.w / 2, -l.h * 0.5, l.w / 2, 0);
+    cx.strokeStyle = `hsla(${l.hue},85%,80%,0.55)`; cx.lineWidth = 2;
+    cx.shadowColor = `hsla(${l.hue},85%,70%,0.8)`; cx.shadowBlur = 10; cx.stroke();
+    cx.shadowBlur = 0;
+    /* 水晶 */
+    for (let c = 0; c < l.crystals; c++) {
+      const cxp = -l.w / 3 + (c + 0.5) * (l.w / 1.5 / l.crystals), ch = 12 + (c % 2) * 9;
+      cx.beginPath(); cx.moveTo(cxp - 5, -l.h * 0.55); cx.lineTo(cxp, -l.h * 0.55 - ch); cx.lineTo(cxp + 5, -l.h * 0.55);
+      cx.closePath(); cx.fillStyle = `hsla(${l.hue + 40},80%,75%,${0.5 + 0.3 * Math.sin(T * 2 + c)})`; cx.fill();
+    }
+    cx.restore();
+  });
+
+  /* 音の欠片 */
+  shards.forEach(s => {
+    if (s.got) return;
+    const x = s.x - camX, y = s.y - camY + Math.sin(T * 1.6 + s.ph) * 10;
+    if (x < -80 || x > VW + 80 || y < -80 || y > VH + 80) return;
+    const pu = 0.75 + 0.25 * Math.sin(T * 3 + s.ph);
+    const g = cx.createRadialGradient(x, y, 2, x, y, 34 * pu);
+    g.addColorStop(0, 'rgba(255,225,150,0.85)'); g.addColorStop(0.4, 'rgba(255,212,121,0.25)'); g.addColorStop(1, 'transparent');
+    cx.fillStyle = g; cx.fillRect(x - 40, y - 40, 80, 80);
+    drawNoteGlyph(x, y, 1.5 * pu + 0.4, '#ffe9b3', 'rgba(255,212,121,0.95)');
+  });
+
+  /* パーティクル */
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const p = parts[i];
+    p.x += p.vx; p.y += p.vy; p.vy -= 0.015; p.life -= p.d;
+    if (p.life <= 0) { parts.splice(i, 1); continue; }
+    cx.beginPath(); cx.arc(p.x - camX, p.y - camY, p.r * p.life, 0, 7);
+    cx.fillStyle = `hsla(${p.hue},90%,72%,${p.life * 0.9})`; cx.fill();
+  }
+
+  if (state === 'play' || state === 'fin') {
+    /* 旅人の軌跡（音の残響） */
+    P.trail.forEach((t, i) => {
+      const a = (1 - i / P.trail.length) * 0.3;
+      cx.beginPath(); cx.arc(t.x - camX, t.y - camY + 6, 2.4 * (1 - i / P.trail.length) + 0.5, 0, 7);
+      cx.fillStyle = `rgba(110,231,216,${a})`; cx.fill();
+    });
+
+    /* 旅の音楽家（フード姿・杖に光る音符） */
+    const px = P.x - camX, py = P.y - camY + Math.sin(T * 2.2) * 4;
+    cx.save(); cx.translate(px, py); cx.scale(P.dir, 1);
+    cx.rotate(P.vx * P.dir * 0.02);
+    /* 後光 */
+    const hg = cx.createRadialGradient(0, 0, 4, 0, 0, 46);
+    hg.addColorStop(0, 'rgba(139,124,246,0.35)'); hg.addColorStop(1, 'transparent');
+    cx.fillStyle = hg; cx.fillRect(-50, -50, 100, 100);
+    /* マント（涙型） */
+    cx.beginPath();
+    cx.moveTo(0, -22);
+    cx.quadraticCurveTo(15, -16, 12, 4);
+    cx.quadraticCurveTo(10 + Math.sin(T * 6) * 3, 18, 2, 24);
+    cx.quadraticCurveTo(-12 - Math.sin(T * 6) * 4, 16, -10, -2);
+    cx.quadraticCurveTo(-13, -16, 0, -22);
+    cx.closePath();
+    const cg = cx.createLinearGradient(0, -22, 0, 24);
+    cg.addColorStop(0, '#3d4479'); cg.addColorStop(1, '#171c45');
+    cx.fillStyle = cg; cx.fill();
+    cx.strokeStyle = 'rgba(139,124,246,0.7)'; cx.lineWidth = 1.4; cx.stroke();
+    /* フードの中の顔（三日月の光） */
+    cx.beginPath(); cx.arc(3, -13, 4.6, -0.6, 2.4);
+    cx.strokeStyle = '#ffe9b3'; cx.lineWidth = 2; cx.lineCap = 'round';
+    cx.shadowColor = 'rgba(255,233,179,0.9)'; cx.shadowBlur = 8; cx.stroke(); cx.shadowBlur = 0;
+    /* 杖と音符 */
+    cx.beginPath(); cx.moveTo(10, 2); cx.lineTo(20, -20);
+    cx.strokeStyle = '#98a1cf'; cx.lineWidth = 2; cx.stroke();
+    drawNoteGlyph(22, -26, 0.9 + 0.15 * Math.sin(T * 4), '#6ee7d8', 'rgba(110,231,216,0.9)');
+    cx.restore();
+
+    /* 羅針盤: 最寄りの欠片への矢印 */
+    if (state === 'play' && got < 12) {
+      let near = null, nd = 1e9;
+      shards.forEach(s => { if (!s.got) { const d = Math.hypot(s.x - P.x, s.y - P.y); if (d < nd) { nd = d; near = s; } } });
+      if (near && nd > 240) {
+        const a = Math.atan2(near.y - P.y, near.x - P.x);
+        cx.save(); cx.translate(px, py); cx.rotate(a);
+        cx.globalAlpha = 0.5 + 0.3 * Math.sin(T * 4);
+        cx.beginPath(); cx.moveTo(56, 0); cx.lineTo(44, -6); cx.lineTo(47, 0); cx.lineTo(44, 6); cx.closePath();
+        cx.fillStyle = '#ffd479'; cx.shadowColor = 'rgba(255,212,121,0.9)'; cx.shadowBlur = 8; cx.fill();
+        cx.restore(); cx.globalAlpha = 1;
+      }
+    }
+    /* フィナーレの流星群 */
+    if (state === 'fin' && Math.random() < 0.3)
+      burst(camX + Math.random() * VW, camY + Math.random() * VH * 0.5, [46, 175, 260, 320][Math.floor(Math.random() * 4)], 3);
+  }
+
+  /* ビネット */
+  const vg = cx.createRadialGradient(VW / 2, VH / 2, VH * 0.42, VW / 2, VH / 2, VH * 0.95);
+  vg.addColorStop(0, 'transparent'); vg.addColorStop(1, 'rgba(3,4,10,0.55)');
+  cx.fillStyle = vg; cx.fillRect(0, 0, VW, VH);
+}
+loop();
+</script>
+</body>
+</html>
